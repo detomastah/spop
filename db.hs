@@ -5,8 +5,28 @@ import IO
 import System.Time
 import Char
 
+quicksort  []           =  []
+quicksort (x:xs)        =  quicksort [y | y <- xs, y<x ]
+                        ++ [x]
+                        ++ quicksort [y | y <- xs, y>=x]
+
 {- nazwisko, data, okres, uwagi -}
 data Reservation = Reservation String CalendarTime TimeDiff String deriving(Show, Read)
+
+instance Eq Reservation where
+    (Reservation name0 date0 period0 desc0) == (Reservation name1 date1 period1 desc1) =
+        name0 == name1 && date0 == date1 && period0 == period1 && desc0 == desc1
+
+instance Ord Reservation where
+    (Reservation name0 date0 period0 desc0) < (Reservation name1 date1 period1 desc1) =
+        date0 < date1
+    (Reservation name0 date0 period0 desc0) > (Reservation name1 date1 period1 desc1) =
+        date0 > date1
+    (Reservation name0 date0 period0 desc0) <= (Reservation name1 date1 period1 desc1) =
+        date0 <= date1
+    (Reservation name0 date0 period0 desc0) >= (Reservation name1 date1 period1 desc1) =
+        date0 >= date1
+
 
 {- numer stolika, ilosc siedzen, opis, rezerwacje -}
 data Table = Table Int Int String [Reservation] deriving(Show, Read)
@@ -43,6 +63,8 @@ validateNumericalityOf str = foldr (&&) True (map isDigit str)
 findTableByID (t:ts) id = 
     if (getID t) == id then t else findTableByID ts id
 
+
+
 showDate (CalendarTime ctYear ctMonth ctDay ctHour ctMin ctSec ctPicosec ctWDay ctYDay ctTZName ctTZ ctIsDST) =
     (show ctMonth) ++ " " ++ (show ctDay) ++ " " ++ (show ctHour) ++ ":" ++ (show ctMin)
 showPeriod (TimeDiff tdYear tdMonth tdDay tdHour tdMin tdSec tdPicosec) = 
@@ -52,13 +74,18 @@ showReserv :: [Reservation] -> String
 showReserv [] = "";
 showReserv ((Reservation name date period desc):xs) = ("\tName: " ++ name ++ "\tDate: " ++ (showDate date) ++ "\tPeriod: " ++ (showPeriod period) ++ "\tDesc: " ++ desc ++ "\n") ++ (showReserv xs);
 
-showTable :: Table -> String
-showTable (Table i seats desc xs) = "ID: " ++ show i ++ "\tSeats: " ++ show seats ++ "\tDesc: " ++ desc ++ "\n" ++ (showReserv xs);
 
-showDB :: TableList -> String
+showTable (Table i seats desc xs) = "ID: " ++ show i ++ "\tSeats: " ++ show seats ++ "\tDesc: " ++ desc ++ "\n" ++ (showReserv xs);
+showJustTable (Table i seats desc xs) = "ID: " ++ show i ++ "\tSeats: " ++ show seats ++ "\tDesc: " ++ desc ++ "\n"
+
+
 showDB [] = "Empty"
 showDB [x] = (showTable x)
 showDB (x:xs) = (showTable x) ++ (showDB xs)
+
+showJustTables [] = "Empty"
+showJustTables tl = concat (map (showJustTable) tl)
+
 
 saveDB :: TableList -> FilePath -> IO ()
 saveDB tl path = do
@@ -74,9 +101,10 @@ loadDB path = do
     return $! (read cont)
 
 
+
+
 getTimeDifference ct1 ct2 = normalizeTimeDiff (diffClockTimes (toClockTime ct1) (toClockTime ct2))
 
-defaultPeriod = TimeDiff 0 0 0 2 0 0 0
 minutesPeriod i = (TimeDiff 0 0 0 0 i 0 0)
 
 
@@ -95,7 +123,7 @@ findFreeTablesByDateAndTime date period tl = filter (\t -> testTableReservationA
 tablesReadyToReserve date period seats tl = findFreeTablesByDateAndTime date period (findTablesWithSufficientSeats seats tl)
 
 -- STUB
-addReservationToTable (Table id seats desc reservations) name date period = Table id seats desc new_reservations
+addReservationToTable (Table id seats desc reservations) name date period = Table id seats desc (quicksort new_reservations)
     where new_reservations = (Reservation name date period ""):reservations
 addReservation tl id name date period = (addReservationToTable (findTableByID tl id) name date period):(remById id tl)
 
@@ -108,12 +136,28 @@ remReservationByName tl name = map (\x -> remReservationFromTableByName x name) 
 remReservationByNameAndDate tl name date = map (\x -> remReservationFromTableByNameAndDate x name date) tl
 remReservationByIDAndDate tl id date = (remReservationFromTableByDate (findTableByID tl id) date):(remById id tl)
 
+remReservationFromTableBeforeDate (Table id seats desc res) date = (Table id seats desc (filter (\x -> (getDate x) >= date) res))
+remReservationBeforeDate tl date = map (\x -> remReservationFromTableBeforeDate x date) tl
+
+
 filterTablesWithReservByName [] name = []
 filterTablesWithReservByName ((Table id seats desc res):ts) name =
     let onlyname = (filter (\x -> (getName x) == name) res)
     in if length onlyname == 0
         then filterTablesWithReservByName ts name
         else (Table id seats desc onlyname):(filterTablesWithReservByName ts name)
+
+
+existsReservationByDate [] date = False
+existsReservationByDate (r:rs) date = if (getDate r) == date then True else existsReservationByDate rs date
+
+
+getReservationMaxPeriodAtDate [] date = (TimeDiff 0 0 1 0 0 0 0)
+getReservationMaxPeriodAtDate ((Reservation _ date period _):xs) ndate =
+    if ndate >= date then
+            if getTimeDifference ndate date >= period then getReservationMaxPeriodAtDate xs ndate else (TimeDiff 0 0 0 0 0 0 0)
+        else
+            getTimeDifference date ndate
 
 {-
 
