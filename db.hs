@@ -32,6 +32,9 @@ getSeats (Table _ seats _ _) = seats
 getReservations (Table _ _ _ reservations) = reservations
 getID (Table id _ _ _) = id
 
+getName (Reservation name date period desc) = name
+getDate (Reservation name date period desc) = date
+
 validateExistenceOfTable :: TableList -> Int -> Bool
 validateExistenceOfTable tl id = 0 == length (filter ((== id).getID) tl)
 
@@ -40,15 +43,21 @@ validateNumericalityOf str = foldr (&&) True (map isDigit str)
 tlgetTableID (t:ts) id = 
     if (getID t) == id then t else tlgetTableID ts id
 
+showDate (CalendarTime ctYear ctMonth ctDay ctHour ctMin ctSec ctPicosec ctWDay ctYDay ctTZName ctTZ ctIsDST) =
+    (show ctMonth) ++ " " ++ (show ctDay) ++ " " ++ (show ctHour) ++ ":" ++ (show ctMin)
+showPeriod (TimeDiff tdYear tdMonth tdDay tdHour tdMin tdSec tdPicosec) = 
+    (show tdHour) ++ ":" ++ (show tdMin)
+
 showReserv :: [Reservation] -> String
 showReserv [] = "";
-showReserv ((Reservation name cal diff desc):xs) = ("\tName: " ++ name ++ " Cal: " ++ show cal ++ " Time: " ++ show diff ++ " Desc: " ++ desc ++ "\n") ++ (showReserv xs);
+showReserv ((Reservation name date period desc):xs) = ("\tName: " ++ name ++ "\tDate: " ++ (showDate date) ++ "\tPeriod: " ++ (showPeriod period) ++ "\tDesc: " ++ desc ++ "\n") ++ (showReserv xs);
 
 showTable :: Table -> String
-showTable (Table i seats desc xs) = "ID: " ++ show i ++ " Seats: " ++ show seats ++ " Desc: " ++ desc ++ "\n" ++ (showReserv xs);
+showTable (Table i seats desc xs) = "ID: " ++ show i ++ "\tSeats: " ++ show seats ++ "\tDesc: " ++ desc ++ "\n" ++ (showReserv xs);
 
 showDB :: TableList -> String
 showDB [] = "Empty"
+showDB [x] = (showTable x)
 showDB (x:xs) = (showTable x) ++ (showDB xs)
 
 saveDB :: TableList -> FilePath -> IO ()
@@ -65,26 +74,52 @@ loadDB path = do
     return $! (read cont)
 
 
-getTimeDifference ct1 ct2 = diffClockTimes (toClockTime ct1) (toClockTime ct2)
+getTimeDifference ct1 ct2 = normalizeTimeDiff (diffClockTimes (toClockTime ct1) (toClockTime ct2))
 
 defaultPeriod = TimeDiff 0 0 0 2 0 0 0
+minutesPeriod i = (TimeDiff 0 0 0 0 i 0 0)
 
 
 -- CHECK IF IT IS VALID!!!
-testTableReservationAbility [] cal diff = True
-testTableReservationAbility ((Reservation _ cal diff _):xs) ncal ndiff =
-    if ncal >= cal then
-            if normalizeTimeDiff (getTimeDifference ncal cal) >= diff then True && testTableReservationAbility xs ncal ndiff else False
+testTableReservationAbility [] date period = True
+testTableReservationAbility ((Reservation _ date period _):xs) ndate nperiod =
+    if ndate >= date then
+            if getTimeDifference ndate date >= period then True && testTableReservationAbility xs ndate nperiod else False
         else
-            if normalizeTimeDiff (getTimeDifference cal ncal) >= ndiff then True && testTableReservationAbility xs ncal ndiff else False
+            if getTimeDifference date ndate >= nperiod then True && testTableReservationAbility xs ndate nperiod else False
 
 findTablesWithSufficientSeats seats tl = filter (\t -> (getSeats t) >= seats) tl
 
-findFreeTablesByDateAndTime date time tl = filter (\t -> testTableReservationAbility (getReservations t) date time) tl
+findFreeTablesByDateAndTime date period tl = filter (\t -> testTableReservationAbility (getReservations t) date period) tl
 
-tablesReadyToReserve date seats tl = findFreeTablesByDateAndTime date defaultPeriod (findTablesWithSufficientSeats seats tl)
+tablesReadyToReserve date period seats tl = findFreeTablesByDateAndTime date period (findTablesWithSufficientSeats seats tl)
 
 -- STUB
-addReservationToTable_ (Table id seats desc reservations) name day = Table id seats desc ((Reservation name day defaultPeriod ""):reservations)
-addReservationToTable tl id name day  = (addReservationToTable_ (tlgetTableID tl id) name day):(remById id tl)
+addReservationToTable_ (Table id seats desc reservations) name date period = Table id seats desc ((Reservation name date period ""):reservations)
+addReservationToTable tl id name date period = (addReservationToTable_ (tlgetTableID tl id) name date period):(remById id tl)
 
+
+remReservationFromTable_Name (Table id seats desc res) name = (Table id seats desc (filter (\x -> (getName x) /= name) res))
+remReservationFromTable_Date (Table id seats desc res) date = (Table id seats desc (filter (\x -> (getDate x) /= date) res))
+remReservationFromTable_NameDate (Table id seats desc res) name date = (Table id seats desc (filter (\x -> ((getName x /= name) || (getDate x /= date))) res))
+
+remReservationFromTL_Name tl name = map (\x -> remReservationFromTable_Name x name) tl
+remReservationFromTL_NameDate tl name date = map (\x -> remReservationFromTable_NameDate x name date) tl
+remReservationFromTL_IDDate tl id date = (remReservationFromTable_Date (tlgetTableID tl id) date):(remById id tl)
+
+
+filterTablesWithReservByName [] name = []
+filterTablesWithReservByName ((Table id seats desc res):ts) name =
+    let onlyname = (filter (\x -> (getName x) == name) res)
+    in if length onlyname == 0
+        then filterTablesWithReservByName ts name
+        else (Table id seats desc onlyname):(filterTablesWithReservByName ts name)
+
+{-
+
+tl <- loadDB "database"
+putStrLn (showDB tl)
+date <- askForDayTimeValue
+putStrLn (showDB (remReservationFromTL_NameDate tl "Bla2" date))
+
+   -}
