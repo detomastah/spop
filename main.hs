@@ -140,17 +140,17 @@ menuReserv tl = do
     putStr "Command? "; hFlush stdout
     q <- getLine
     tl <- case q of
-        "1"         ->	do tl <- actReservAdd tl;           menuReserv tl;
-        "2"         ->	do tl <- actReservModByName tl;     menuReserv tl;
-        "3"         ->	do tl <- actReservDelByName tl;     menuReserv tl;
-        "4"         ->  do cur <- getClockTime
-                            date <- (toCalendarTime cur)
-                            date <- return (toUTCTime (toClockTime date))
-                            tl <- (return (remReservationBeforeDate tl date))
-                            menuReserv tl
+        "1"         ->  do tl <- actReservAdd tl;           menuReserv tl;
+        "2"         ->  do tl <- actReservModByName tl;     menuReserv tl;
+        "3"         ->  do tl <- actReservDelByName tl;     menuReserv tl;
+        "4"         ->  do cur <- getClockTime;
+                            date <- (toCalendarTime cur);
+                            date <- return (toUTCTime (toClockTime date));
+                            tl <- (return (remReservationBeforeDate tl date));
+                            menuReserv tl;
         "5"         ->  do putStrLn (showDB tl);            menuReserv tl;
-        "`"         ->	do return tl;
-        otherwise   ->	do putStrLn "Invalid option";   menuReserv tl;
+        "`"         ->  do return tl;
+        otherwise   ->  do putStrLn "Invalid option";   menuReserv tl;
     return tl;
     
     -- Wpisanie pustego daje wyjatek PARSE!!!! SKORYGOWAC!!!!

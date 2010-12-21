@@ -31,6 +31,16 @@ instance Ord Reservation where
 {- numer stolika, ilosc siedzen, opis, rezerwacje -}
 data Table = Table Int Int String [Reservation] deriving(Show, Read)
 
+instance Eq Table where
+    (Table id0 seats0 desc0 res0) == (Table id1 seats1 desc1 res1) =
+        id0 == id1 && seats0 == seats1 && desc0 == desc1 && res0 == res1
+
+instance Ord Table where
+    (Table id0 _ _ _) < (Table id1 _ _ _) = id0 < id1
+    (Table id0 _ _ _) > (Table id1 _ _ _) = id0 > id1
+    (Table id0 _ _ _) <= (Table id1 _ _ _) = id0 <= id1
+    (Table id0 _ _ _) >= (Table id1 _ _ _) = id0 >= id1
+        
 table :: Int -> Int -> String -> Table
 table i seats desc = Table i seats desc []
 
@@ -42,7 +52,7 @@ calGetDay (CalendarTime year month day hour min _ _ _ _ _ _ _) = day
 
 addTable :: Table -> TableList -> TableList
 addTable t [] = [t]
-addTable t tl = t:tl
+addTable t tl = quicksort (t:tl)
 
 remById :: Int -> TableList -> TableList
 remById ii [] = []
