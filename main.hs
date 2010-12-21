@@ -7,15 +7,9 @@ import System.Time
 import Random
 
 
-rInt :: String -> Int
-rInt n = (read n)
-
 main = do
     db <- loadDB "database"
     menuMain db
-
-fuu :: String -> String
-fuu n = "crap" ++ n
 
 menuMain :: TableList -> IO ()
 menuMain tl = do
@@ -66,7 +60,7 @@ askForID tl new = do
             putStrLn ("Error ID " ++ if new then "already exists" else "doesn't exist");
             askForID tl new;
 
-askForNumericValue :: String -> IO Int 			    
+askForNumericValue :: String -> IO Int
 askForNumericValue question = do
     putStr question; hFlush stdout 
     i <- getLine
@@ -81,20 +75,30 @@ askForStringValue question = do
     i <- getLine
     return i
 
+askForNumericValueWithLimits question min max = do
+    i <- askForNumericValue (question ++ "(" ++ show min ++ ", " ++ show max ++ "): ")
+    if i >= min && i <= max 
+        then do return i
+        else do putStrLn "Invalid value: out of bounds"
+                askForNumericValueWithLimits question min max
 
 
 askForDayTimeValue :: IO CalendarTime
 askForDayTimeValue = do
-    day <- askForNumericValue "Day: "
-    hour <- askForNumericValue "Hour: "
-    minu <- askForNumericValue "Minutes (rounded down to 15 minutes): "
+    day <- askForNumericValueWithLimits "Day: " 1 31
+    hour <- askForNumericValueWithLimits "Hour: " 0 23
+    minu <- askForNumericValueWithLimits "Minutes (rounded down to 15 minutes): " 0 59
     minu <- return ((div minu 15) * 15)
     cur <- getClockTime
     cal <- toCalendarTime cur
-    if day >= (calGetDay cal) then 
-            return (toUTCTime (toClockTime (CalendarTime (calGetYear cal) (toEnum (calGetMonth cal)) day hour minu 0 0 Monday 0 "" 0 False)))
-        else
-            return (toUTCTime (toClockTime (CalendarTime (calGetYear cal) (toEnum (calGetMonth cal+1)) day hour minu 0 0 Monday 0 "" 0 False)))
+    cal <- if day >= (calGetDay cal) 
+            then return (toUTCTime (toClockTime (CalendarTime (calGetYear cal) (toEnum (fromEnum (calGetMonth cal))) day hour minu 0 0 Monday 0 "" 0 False)))
+            else return (let y = calGetYear cal + (div m 12); m = ((fromEnum (calGetMonth cal)) + 1)
+                            in (toUTCTime (toClockTime (CalendarTime y (toEnum (mod m 12)) day hour minu 0 0 Monday 0 "" 0 False))))
+            
+    if calGetDay cal == day
+        then return cal
+        else do putStrLn ("Not enough days in month: " ++ show (calGetMonth cal)); askForDayTimeValue
 
 askForTimePeriod = do i <- askForNumericValue "For how many minutes (rounded up to 15 minutes): "; return (normalizeTimeDiff (minutesPeriod ((div (i+14) 15) * 15)))
  
@@ -135,7 +139,8 @@ menuReserv tl = do
     putStrLn "\t2 - Modify by Name"
     putStrLn "\t3 - Delete by Name"
     putStrLn "\t4 - Delete old"
-    putStrLn "\t5 - Show"
+    putStrLn "\t5 - Search by Name"
+    putStrLn "\t6 - Show"
     putStrLn "\t` - Back"
     putStr "Command? "; hFlush stdout
     q <- getLine
@@ -148,7 +153,8 @@ menuReserv tl = do
                             date <- return (toUTCTime (toClockTime date));
                             tl <- (return (remReservationBeforeDate tl date));
                             menuReserv tl;
-        "5"         ->  do putStrLn (showDB tl);            menuReserv tl;
+        "5"         ->  do actSearchForReservByName tl;     menuReserv tl;
+        "6"         ->  do putStrLn (showDB tl);            menuReserv tl;
         "`"         ->  do return tl;
         otherwise   ->  do putStrLn "Invalid option";   menuReserv tl;
     return tl;
@@ -276,5 +282,16 @@ actSearchForFreeTablesByDate tl = do
             ++ "\n"
     
     putStrLn (concat (map (showSlots) tl))
-    
     return ()
+
+actSearchForReservByName tl = do
+    putStrLn "\nSearch for: Reservations, by Name"
+    
+    name <- askForStringValue "Angry client's surname: "
+    
+    new_tl <- return (filterTablesWithReservByName tl name)
+    if length new_tl > 0
+        then putStrLn (showDB new_tl)
+        else putStrLn "Client doesn't have any reservations";
+    return ()
+

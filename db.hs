@@ -47,7 +47,7 @@ table i seats desc = Table i seats desc []
 type TableList = [Table]
 
 calGetYear (CalendarTime year month day hour min _ _ _ _ _ _ _) = year
-calGetMonth (CalendarTime year month day hour min _ _ _ _ _ _ _) = fromEnum month
+calGetMonth (CalendarTime year month day hour min _ _ _ _ _ _ _) = month
 calGetDay (CalendarTime year month day hour min _ _ _ _ _ _ _) = day
 
 addTable :: Table -> TableList -> TableList
