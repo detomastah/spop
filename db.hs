@@ -1,3 +1,5 @@
+module DB where
+
 import System.Time
 
 {- nazwisko, dzien, godzina, uwagi -}
@@ -8,9 +10,25 @@ data Table = Table Int Int String [Reservation] deriving Show
 type Database = [Table]
 
 table :: Int -> Int -> String -> Table
-table id seats desc = Table id seats desc []
+table i seats desc = Table i seats desc []
 
 addTable :: Table -> Database -> Database
 addTable t [] = [t]
 addTable t db = t:db
 
+showTable :: Table -> String
+showTable (Table i seats desc []) = "ID " ++ show i ++ "\n";
+
+showDB :: Database -> String
+showDB [] = "Empty"
+showDB (x:xs) = (showTable x) ++ (showDB xs)
+
+clearDB :: IO Database
+clearDB = do return [];
+
+addTab :: Table -> Database -> IO Database
+addTab t db = do return (t:db);
+
+showTab :: Database -> IO ()
+--showTab [] = do putStrLn "Empty"
+showTab db = do putStrLn (showDB db)
