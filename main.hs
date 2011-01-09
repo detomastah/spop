@@ -34,12 +34,14 @@ main = do
 menuMain = do
 	putStrLn "Menu: Main"
 	putStrLn "\t1 - Tables"
+	putStrLn "\t2 - Reservations"
 	putStrLn "\tq - Quit"
 	q <- getLine
 	case q of
 		"1"		->	do menuTables
+		"2"		->	do menuReserv
 		"q"		->	do putStrLn "Bye Bye";
-		otherwise	->	do putStrLn "invalid option"; do menuMain
+		otherwise	->	do putStrLn "Invalid option"; do menuMain
 
 
 menuTables = do
@@ -50,23 +52,23 @@ menuTables = do
 	putStrLn "\tb - Back"
 	q <- getLine
 	case q of
-		"1"		->	do putStrLn "blabla 1"; actTablesAdd
-		"2"		->	do putStrLn "blabla 1"; menuTables
-		"3"		->	do putStrLn "blabla 1"; actTablesDel
+		"1"		->	do actTablesAdd; menuMain
+		"2"		->	do actTablesMod; menuMain
+		"3"		->	do actTablesDel; menuMain
 		"b"		->	menuMain
-		otherwise	->	do putStrLn "invalid option"; do menuMain
+		otherwise	->	do putStrLn "Invalid option"; do menuTables
 
 
 actTablesAdd = do
 	putStrLn "Table Add"
-	putStr "Table ID: "
+	putStr "Table ID: "; hFlush stdout
 	line <- getLine
 --	i <- (read line)
-	putStr "Table number of seats: "
+	putStr "Table number of seats: "; hFlush stdout
 	line <- getLine
 --	seats <- (read line)
 	
-	putStr "Description: "
+	putStr "Description: "; hFlush stdout
 	line <- getLine
 --	desc <- "a" ++ line
 	
@@ -76,18 +78,18 @@ actTablesAdd = do
 
 actTablesMod = do
 	putStrLn "Table Modify"
-	putStr "Table ID: "
+	putStr "Table ID: "; hFlush stdout
 	line <- getLine
 --	id <- line
 	
 --	tab <- getByID id db
 --	db = remove id db
 	
-	putStr "Table number of seats: "
+	putStr "Table number of seats: "; hFlush stdout
 	line <- getLine
 --	seats <- if line == "" then getSeats tab else line
 	
-	putStr "Description: "
+	putStr "Description: "; hFlush stdout
 	line <- getLine
 --	desc <- if line == "" then getDesc tab else line
 	
@@ -98,10 +100,27 @@ actTablesMod = do
 
 actTablesDel = do
 	putStrLn "Table Delete"
-	putStr "Table ID: "
+	putStr "Table ID: "; hFlush stdout
 	line <- getLine
 --	id <- line
 	
 --	db = remove id db
 	
 	putStrLn "Done"
+
+
+menuReserv = do
+	putStrLn "Menu: Reservations"
+	putStrLn "\t1 - Add"
+	putStrLn "\t2 - Modify"
+	putStrLn "\t3 - Delete"
+	putStrLn "\t4 - Search by ID"
+	putStrLn "\tb - Back"
+	q <- getLine
+	case q of
+		"1"		->	do putStrLn "blabla 1"; 
+		"2"		->	do putStrLn "blabla 1";
+		"3"		->	do putStrLn "blabla 1"; 
+		"4"		->	do putStrLn "blabla 1"; 
+		"b"		->	menuMain
+		otherwise	->	do putStrLn "Invalid option"; do menuReserv
