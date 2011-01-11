@@ -16,6 +16,15 @@ addTable :: Table -> Database -> Database
 addTable t [] = [t]
 addTable t db = t:db
 
+getSeats :: Table -> Int
+getSeats (Table _ seats _ _) = seats
+
+getID :: Table -> Int
+getID (Table id _ _ _) = id
+
+validateUniquenessOfTable :: Database -> Int -> Bool
+validateUniquenessOfTable db id = 0 == length (filter ((== id).getID) db)
+
 showTable :: Table -> String
 showTable (Table i seats desc []) = "ID: " ++ show i ++ " Seats: " ++ show seats ++ " Desc: " ++ desc ++ "\n";
 
