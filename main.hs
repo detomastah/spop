@@ -49,11 +49,21 @@ menuTables db = do
 		otherwise	->	do putStrLn "Invalid option";		menuTables db;
 	return db;
 
+askForID :: Database -> IO String
+askForID db = do
+	putStr "Table ID: "; hFlush stdout;
+	i <- getLine;
+	if validateUniquenessOfTable db (read i) then
+			return i
+		else do
+			putStrLn "Error ID already exists";
+			askForID db;
+
 actTablesAdd :: Database -> IO Database
 actTablesAdd db = do
 	putStrLn "Table Add"
-	putStr "Table ID: "; hFlush stdout
-	i <- getLine
+	
+	i <- (askForID db)
 	
 	putStr "Table number of seats: "; hFlush stdout
 	seats <- getLine
