@@ -17,18 +17,17 @@ addTable t [] = [t]
 addTable t db = t:db
 
 showTable :: Table -> String
-showTable (Table i seats desc []) = "ID " ++ show i ++ "\n";
+showTable (Table i seats desc []) = "ID: " ++ show i ++ " Seats: " ++ show seats ++ " Desc: " ++ desc ++ "\n";
 
 showDB :: Database -> String
 showDB [] = "Empty"
 showDB (x:xs) = (showTable x) ++ (showDB xs)
 
-clearDB :: IO Database
-clearDB = do return [];
 
 addTab :: Table -> Database -> IO Database
 addTab t db = do return (t:db);
-
-showTab :: Database -> IO ()
+{-
+showTab :: Database -> IO Database
 --showTab [] = do putStrLn "Empty"
-showTab db = do putStrLn (showDB db)
+showTab db = do putStrLn (showDB db); return db
+-}
