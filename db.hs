@@ -89,5 +89,5 @@ loadDB path = do
 	putStrLn cont
 	putStrLn (showDB (parseDB cont))
 	hClose h
-	return [];
+	return (parseDB cont);
 	
