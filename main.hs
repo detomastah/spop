@@ -56,56 +56,49 @@ menuTables db = do
 
 askForID :: Database -> Bool -> IO Int
 askForID db new = do
-	putStr "Table ID: "; hFlush stdout;
-	i <- getLine;
-	if validateUniquenessOfTable db (read i) == new then
-			return (read i)
-		else do
-			putStrLn ("Error ID " ++ if new then "already exists" else "doesn't exist");
-			askForID db new;
+    i <- askForNumericValue "Table ID:"
+    if validateExistenceOfTable db i == new then return i
+        else do
+	        putStrLn ("Error ID " ++ if new then "already exists" else "doesn't exist");
+	        askForID db new;
+			    
+askForNumericValue :: String -> IO Int 			    
+askForNumericValue question = do
+    putStr question; hFlush stdout 
+    i <- getLine
+    if validateNumericalityOf i == False then do
+        putStrLn "Invalid value: non numeric"
+        askForNumericValue question
+        else return (read i)
+        
+askForStringValue :: String -> IO String
+askForStringValue question = do
+    putStr question; hFlush stdout 
+    i <- getLine
+    return i
 
 actTablesAdd :: Database -> IO Database
 actTablesAdd db = do
 	putStrLn "\nTable Add"
-	
-	i <- (askForID db True)
-	
-	putStr "Table number of seats: "; hFlush stdout
-	seats <- getLine
-	
-	putStr "Description: "; hFlush stdout
-	desc <- getLine
-	
-	--moze byc tak
-	return (addTable (table (i) (read seats) desc) db)
-	
-{-	--albo tak
-	db <- addTab (table (read i) (read seats) desc) db
-	return db
-	-}
+	id <- (askForID db True)
+	seats <- askForNumericValue "Table number of seats: "
+	desc <- askForStringValue "Description: "
+	return (addTable (table id seats desc) db);
 
 actTablesMod :: Database -> IO Database
 actTablesMod db = do
-	putStrLn "\nTable Modify"
-	
-	i <- (askForID db False)
-	
-	putStr "Table number of seats: "; hFlush stdout
-	seats <- getLine
-	
-	putStr "Description: "; hFlush stdout
-	desc <- getLine
-	
-	return (addTable (table i (read seats) desc) (remID i db))
+    putStrLn "\nTable Modify"
+    id <- (askForID db False)
+    seats <- askForNumericValue "Table number of seats: "
+    desc <- askForStringValue "Description: "
+    return (addTable (table id seats desc) (remID id db))
 
 actTablesDel :: Database -> IO Database
 actTablesDel db = do
 	putStrLn "\nTable Delete"
-	
-	putStr "Table ID: "; hFlush stdout;
-	i <- getLine;
-	if validateUniquenessOfTable db (read i) == False then
-			do putStrLn "Ok removing"; return (remID (read i) db)
+	id <- askForNumericValue "TableID: "
+	if validateExistenceOfTable db id == False then
+			do putStrLn "Table removed"; return (remID id db)
 		else do
 			putStrLn ("Error ID doesn't exist");
 			return db;

@@ -3,6 +3,7 @@ module DB where
 import IO
 
 import System.Time
+import Char
 
 {- nazwisko, dzien, godzina, uwagi -}
 data Reservation = Reservation String String String String deriving Show
@@ -29,8 +30,10 @@ getSeats (Table _ seats _ _) = seats
 getID :: Table -> Int
 getID (Table id _ _ _) = id
 
-validateUniquenessOfTable :: Database -> Int -> Bool
-validateUniquenessOfTable db id = 0 == length (filter ((== id).getID) db)
+validateExistenceOfTable :: Database -> Int -> Bool
+validateExistenceOfTable db id = 0 == length (filter ((== id).getID) db)
+
+validateNumericalityOf str = foldr (&&) True (map isDigit str) 
 
 showTable :: Table -> String
 showTable (Table i seats desc []) = "ID: " ++ show i ++ " Seats: " ++ show seats ++ " Desc: " ++ desc ++ "\n";
