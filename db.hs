@@ -43,14 +43,14 @@ showDB (x:xs) = (showTable x) ++ (showDB xs)
 
 saveDB :: TableList -> FilePath -> IO ()
 saveDB tl path = do
-	h <- openFile path WriteMode
-	hPutStr h (show tl)
-	hClose h
-	return ()
+    h <- openFile path WriteMode
+    hPutStr h (show tl)
+    hClose h
+    return ()
 
 loadDB :: FilePath -> IO TableList
 loadDB path = do
-	h <- openFile path ReadMode
-	cont <- hGetContents h
-	return $! (read cont);
-	
+    h <- openFile path ReadMode
+    cont <- hGetContents h
+    return $! (read cont);
+
