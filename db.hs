@@ -4,8 +4,8 @@ import IO
 import System.Time
 import Char
 
-{- id stolika, nazwisko, dzien, godzina, uwagi -}
-data Reservation = Reservation String String String String deriving(Show, Read)
+{- id stolika, nazwisko, data, czas, uwagi -}
+data Reservation = Reservation String CalendarTime TimeDiff String deriving(Show, Read)
 
 {- numer stolika, ilosc siedzen, opis, rezerwacje -}
 data Table = Table Int Int String [Reservation] deriving(Show, Read)

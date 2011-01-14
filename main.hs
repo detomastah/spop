@@ -3,6 +3,7 @@ module Main where
 import DB
 import Prelude
 import IO
+import System.Time
 import Random
 
 
@@ -26,12 +27,12 @@ menuMain tl = do
     putStr "Command? "; hFlush stdout
     q <- getLine
     case q of
-        "1"		->	do tl <- menuTables tl;			menuMain tl;
-        "2"		->	do menuReserv;				menuMain tl;
-        "3"		->	do tl <- loadDB "database";		menuMain tl;
-        "4"		->	do saveDB tl "database";			menuMain tl;
+        "1"		->	do tl <- menuTables tl;             menuMain tl;
+        "2"		->	do tl <- menuReserv tl;             menuMain tl;
+        "3"		->	do tl <- loadDB "database";         menuMain tl;
+        "4"		->	do saveDB tl "database";            menuMain tl;
         "`"		->	do putStrLn "Bye Bye";
-        otherwise	->	do putStrLn "Invalid option";		menuMain tl;
+        otherwise	->	do putStrLn "Invalid option";   menuMain tl;
 
 
 
@@ -77,6 +78,24 @@ askForStringValue question = do
     i <- getLine
     return i
 
+calGetYear (CalendarTime year month day hour min _ _ _ _ _ _ _) = year
+calGetMonth (CalendarTime year month day hour min _ _ _ _ _ _ _) = fromEnum month
+calGetDay (CalendarTime year month day hour min _ _ _ _ _ _ _) = day
+
+
+askForDayTimeValue :: IO CalendarTime
+askForDayTimeValue = do
+    day <- askForNumericValue "Day: "
+    hour <- askForNumericValue "Hour: "
+    minu <- askForNumericValue "Minutes: "
+    
+    cur <- getClockTime
+    cal <- toCalendarTime cur
+    if day >= (calGetDay cal) then 
+            return (toUTCTime (toClockTime (CalendarTime (calGetYear cal) (toEnum (calGetMonth cal)) day hour minu 0 0 Monday 0 "" 0 False)))
+        else
+            return (toUTCTime (toClockTime (CalendarTime (calGetYear cal) (toEnum (calGetMonth cal+1)) day hour minu 0 0 Monday 0 "" 0 False)))
+
 actTablesAdd :: TableList -> IO TableList
 actTablesAdd tl = do
     putStrLn "\nTable Add"
@@ -105,30 +124,36 @@ actTablesDel tl = do
 
 
 
-menuReserv = do
+menuReserv :: TableList -> IO TableList
+menuReserv tl = do
     putStrLn "\nMenu: Reservations"
     putStrLn "\t1 - Add"
     putStrLn "\t2 - Modify"
     putStrLn "\t3 - Delete"
     putStrLn "\t4 - Search by ID"
-    putStrLn "\tb - Back"
+    putStrLn "\t` - Back"
     q <- getLine
     case q of
-        "1"		->	do putStrLn "blabla 1"; 
-        "2"		->	do putStrLn "blabla 1";
-        "3"		->	do putStrLn "blabla 1"; 
-        "4"		->	do putStrLn "blabla 1"; 
-        "b"		->	do putStrLn "blabla 1"; 
-        otherwise	->	do putStrLn "Invalid option"; do menuReserv
-
+        "1"		->	do tl <- actReservAdd tl;       menuReserv tl;
+        "2"		->	do putStrLn "blabla 1";         menuReserv tl;
+        "3"		->	do putStrLn "blabla 1";         menuReserv tl;
+        "4"		->	do putStrLn "blabla 1";         menuReserv tl;
+        "`"		->	do return tl;
+        otherwise	->	do putStrLn "Invalid option";   menuReserv tl;
+    return tl;
 
 actReservAdd :: TableList -> IO TableList
 actReservAdd tl = do
-    putStrLn "\nBrutal Reserv Add"
-    id <- (askForID tl True)
-    seats <- askForNumericValue "Table number of seats: "
-    desc <- askForStringValue "Description: "
-    return (addTable (table id seats desc) tl);
+    putStrLn "\nReservation Add"
+    
+--    seats <- askForNumericValue "How many people: "
+    
+    day <- askForDayTimeValue;
+    putStrLn (calendarTimeToString day);
+    
+--    name <- askForStringValue "Name: "
+    
+    return tl;
 
 
 
