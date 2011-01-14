@@ -15,8 +15,8 @@ main = do
 fuu :: String -> String
 fuu n = "crap" ++ n
 
-menuMain :: Database -> IO ()
-menuMain db = do
+menuMain :: TableList -> IO ()
+menuMain tl = do
 	putStrLn "\nMenu: Main"
 	putStrLn "\t1 - Tables"
 	putStrLn "\t2 - Reservations"
@@ -26,17 +26,17 @@ menuMain db = do
 	putStr "Command? "; hFlush stdout
 	q <- getLine
 	case q of
-		"1"		->	do db <- menuTables db;			menuMain db;
-		"2"		->	do menuReserv;				menuMain db;
-		"3"		->	do db <- loadDB "heh.cdb";		menuMain db;
-		"4"		->	do saveDB db "heh.cdb";			menuMain db;
+		"1"		->	do tl <- menuTables tl;			menuMain tl;
+		"2"		->	do menuReserv;				menuMain tl;
+		"3"		->	do tl <- loadDB "database";		menuMain tl;
+		"4"		->	do saveDB tl "database";			menuMain tl;
 		"`"		->	do putStrLn "Bye Bye";
-		otherwise	->	do putStrLn "Invalid option";		menuMain db;
+		otherwise	->	do putStrLn "Invalid option";		menuMain tl;
 
 
 
-menuTables :: Database -> IO Database
-menuTables db = do
+menuTables :: TableList -> IO TableList
+menuTables tl = do
 	putStrLn "\nMenu: Tables"
 	putStrLn "\t1 - Add"
 	putStrLn "\t2 - Modify"
@@ -45,22 +45,22 @@ menuTables db = do
 	putStrLn "\t` - Back"
 	putStr "Command? "; hFlush stdout
 	q <- getLine
-	db <- case q of
-		"1"		->	do db <- actTablesAdd db;		menuTables db;
-		"2"		->	do db <- actTablesMod db;		menuTables db;
-		"3"		->	do db <- actTablesDel db;		menuTables db;
-		"4"		->	do putStrLn (showDB db);		menuTables db;
-		"`"		->	do return db;
-		otherwise	->	do putStrLn "Invalid option";		menuTables db;
-	return db;
+	tl <- case q of
+		"1"		->	do tl <- actTablesAdd tl;		menuTables tl;
+		"2"		->	do tl <- actTablesMod tl;		menuTables tl;
+		"3"		->	do tl <- actTablesDel tl;		menuTables tl;
+		"4"		->	do putStrLn (showDB tl);		menuTables tl;
+		"`"		->	do return tl;
+		otherwise	->	do putStrLn "Invalid option";		menuTables tl;
+	return tl;
 
-askForID :: Database -> Bool -> IO Int
-askForID db new = do
+askForID :: TableList -> Bool -> IO Int
+askForID tl new = do
     i <- askForNumericValue "Table ID:"
-    if validateExistenceOfTable db i == new then return i
+    if validateExistenceOfTable tl i == new then return i
         else do
 	        putStrLn ("Error ID " ++ if new then "already exists" else "doesn't exist");
-	        askForID db new;
+	        askForID tl new;
 			    
 askForNumericValue :: String -> IO Int 			    
 askForNumericValue question = do
@@ -77,31 +77,31 @@ askForStringValue question = do
     i <- getLine
     return i
 
-actTablesAdd :: Database -> IO Database
-actTablesAdd db = do
+actTablesAdd :: TableList -> IO TableList
+actTablesAdd tl = do
 	putStrLn "\nTable Add"
-	id <- (askForID db True)
+	id <- (askForID tl True)
 	seats <- askForNumericValue "Table number of seats: "
 	desc <- askForStringValue "Description: "
-	return (addTable (table id seats desc) db);
+	return (addTable (table id seats desc) tl);
 
-actTablesMod :: Database -> IO Database
-actTablesMod db = do
+actTablesMod :: TableList -> IO TableList
+actTablesMod tl = do
     putStrLn "\nTable Modify"
-    id <- (askForID db False)
+    id <- (askForID tl False)
     seats <- askForNumericValue "Table number of seats: "
     desc <- askForStringValue "Description: "
-    return (addTable (table id seats desc) (remID id db))
+    return (addTable (table id seats desc) (remID id tl))
 
-actTablesDel :: Database -> IO Database
-actTablesDel db = do
+actTablesDel :: TableList -> IO TableList
+actTablesDel tl = do
 	putStrLn "\nTable Delete"
 	id <- askForNumericValue "TableID: "
-	if validateExistenceOfTable db id == False then
-			do putStrLn "Table removed"; return (remID id db)
+	if validateExistenceOfTable tl id == False then do 
+	    putStrLn "Table removed"; return (remID id tl)
 		else do
 			putStrLn ("Error ID doesn't exist");
-			return db;
+			return tl;
 
 
 
