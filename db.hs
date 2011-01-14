@@ -43,26 +43,14 @@ showDB (x:xs) = (showTable x) ++ (showDB xs)
 
 saveDB :: TableList -> FilePath -> IO ()
 saveDB tl path = do
-	h <- openFile (concat [path, ".tables"]) WriteMode
+	h <- openFile path WriteMode
 	hPutStr h (show tl)
 	hClose h
 	return ()
 
-parseTable line = (table ((fst i)) ((fst seats)) (fst desc) ) where
-		i = (head (reads line))
-		seats = (head (reads (snd i)))
-		desc = (head (lex (snd seats)))
-
-parseDB :: String -> TableList
-parseDB [] = []
-parseDB str = (parseTable line):parseDB rest
-	where
-		line = fst (break ('\n'==) str)
-		rest = tail (snd (break ('\n'==) str))
-
 loadDB :: FilePath -> IO TableList
 loadDB path = do
-	h <- openFile (concat [path, ".tables"]) ReadMode
+	h <- openFile path ReadMode
 	cont <- hGetContents h
 	return $! (read cont);
 	
