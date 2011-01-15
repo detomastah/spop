@@ -11,7 +11,8 @@ rInt :: String -> Int
 rInt n = (read n)
 
 main = do
-    menuMain []
+    db <- loadDB "database"
+    menuMain db
 
 fuu :: String -> String
 fuu n = "crap" ++ n
@@ -78,9 +79,6 @@ askForStringValue question = do
     i <- getLine
     return i
 
-calGetYear (CalendarTime year month day hour min _ _ _ _ _ _ _) = year
-calGetMonth (CalendarTime year month day hour min _ _ _ _ _ _ _) = fromEnum month
-calGetDay (CalendarTime year month day hour min _ _ _ _ _ _ _) = day
 
 
 askForDayTimeValue :: IO CalendarTime
@@ -133,7 +131,7 @@ menuReserv tl = do
     putStrLn "\t4 - Search by ID"
     putStrLn "\t` - Back"
     q <- getLine
-    case q of
+    tl <- case q of
         "1"		->	do tl <- actReservAdd tl;       menuReserv tl;
         "2"		->	do putStrLn "blabla 1";         menuReserv tl;
         "3"		->	do putStrLn "blabla 1";         menuReserv tl;
@@ -146,11 +144,22 @@ actReservAdd :: TableList -> IO TableList
 actReservAdd tl = do
     putStrLn "\nReservation Add"
     
+{-    return (addTable (Table 5 3 "neww" [
+        (Reservation "Bla" (toUTCTime (toClockTime (CalendarTime 2011 (toEnum 0) 15 12 00 0 0 Monday 0 "" 0 False))) (TimeDiff 0 0 0 2 0 0 0) ""),
+        (Reservation "Bla2" (toUTCTime (toClockTime (CalendarTime 2011 (toEnum 0) 15 15 00 0 0 Monday 0 "" 0 False))) (TimeDiff 0 0 0 2 0 0 0) "")
+        ]) tl)
+    -}
+    
+    
 --    seats <- askForNumericValue "How many people: "
     
     day <- askForDayTimeValue;
     putStrLn (calendarTimeToString day);
     
+--    seats <- askForNumericValue "How many people: "
+    
+--    putStrLn (showDB (searchFreeTables_MinSeats seats tl))
+    putStrLn (showDB (searchFreeTables_Date_Time day (TimeDiff 0 0 0 2 0 0 0) tl))
 --    name <- askForStringValue "Name: "
     
     return tl;
