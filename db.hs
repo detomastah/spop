@@ -100,13 +100,13 @@ addReservationToTable (Table id seats desc reservations) name date period = Tabl
 addReservation tl id name date period = (addReservationToTable (findTableByID tl id) name date period):(remById id tl)
 
 
-remReservationFromTableByName_ (Table id seats desc res) name = (Table id seats desc (filter (\x -> (getName x) /= name) res))
-remReservationFromTableByDate_ (Table id seats desc res) date = (Table id seats desc (filter (\x -> (getDate x) /= date) res))
-remReservationFromTableByNameAndDate_ (Table id seats desc res) name date = (Table id seats desc (filter (\x -> ((getName x /= name) || (getDate x /= date))) res))
+remReservationFromTableByName (Table id seats desc res) name = (Table id seats desc (filter (\x -> (getName x) /= name) res))
+remReservationFromTableByDate (Table id seats desc res) date = (Table id seats desc (filter (\x -> (getDate x) /= date) res))
+remReservationFromTableByNameAndDate (Table id seats desc res) name date = (Table id seats desc (filter (\x -> ((getName x /= name) || (getDate x /= date))) res))
 
-remReservationByName tl name = map (\x -> remReservationFromTableByName_ x name) tl
-remReservationByNameAndDate tl name date = map (\x -> remReservationFromTableByNameAndDate_ x name date) tl
-remReservationByIDAndDate tl id date = (remReservationFromTableByDate_ (findTableByID tl id) date):(remById id tl)
+remReservationByName tl name = map (\x -> remReservationFromTableByName x name) tl
+remReservationByNameAndDate tl name date = map (\x -> remReservationFromTableByNameAndDate x name date) tl
+remReservationByIDAndDate tl id date = (remReservationFromTableByDate (findTableByID tl id) date):(remById id tl)
 
 filterTablesWithReservByName [] name = []
 filterTablesWithReservByName ((Table id seats desc res):ts) name =
