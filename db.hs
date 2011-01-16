@@ -5,7 +5,7 @@ import IO
 import System.Time
 import Char
 
-{- id stolika, nazwisko, data, czas, uwagi -}
+{- nazwisko, data, okres, uwagi -}
 data Reservation = Reservation String CalendarTime TimeDiff String deriving(Show, Read)
 
 {- numer stolika, ilosc siedzen, opis, rezerwacje -}
@@ -20,38 +20,17 @@ calGetYear (CalendarTime year month day hour min _ _ _ _ _ _ _) = year
 calGetMonth (CalendarTime year month day hour min _ _ _ _ _ _ _) = fromEnum month
 calGetDay (CalendarTime year month day hour min _ _ _ _ _ _ _) = day
 
-
 addTable :: Table -> TableList -> TableList
 addTable t [] = [t]
 addTable t tl = t:tl
 
-remID :: Int -> TableList -> TableList
-remID ii [] = []
-remID ii ((Table i seats desc res):xs) = if ii == i then xs else (Table i seats desc res):(remID ii xs)
+remById :: Int -> TableList -> TableList
+remById ii [] = []
+remById ii ((Table id seats desc res):xs) = if ii == id then xs else (Table id seats desc res):(remById ii xs)
 
-getSeats :: Table -> Int
 getSeats (Table _ seats _ _) = seats
-
-getID :: Table -> Int
+getReservations (Table _ _ _ reservations) = reservations
 getID (Table id _ _ _) = id
-
-tableReservFits [] cal diff = True
-tableReservFits ((Reservation _ cal diff _):xs) ncal ndiff =
-    if ncal >= cal then
-            if normalizeTimeDiff (diffClockTimes (toClockTime ncal) (toClockTime cal)) >= diff then True && tableReservFits xs ncal ndiff else False
-        else
-            if normalizeTimeDiff (diffClockTimes (toClockTime cal) (toClockTime ncal)) >= ndiff then True && tableReservFits xs ncal ndiff else False
-
-
-searchFreeTables_MinSeats seats tl = filter (\t -> (getSeats t) >= seats) tl
-
-searchFreeTables_Date_Time date time [] = []
-searchFreeTables_Date_Time date time ((Table id seats desc res):xs) =
-    if tableReservFits res date time then
-        (Table id seats desc res):(searchFreeTables_Date_Time date time xs)
-        else (searchFreeTables_Date_Time date time xs)
-    
-
 
 validateExistenceOfTable :: TableList -> Int -> Bool
 validateExistenceOfTable tl id = 0 == length (filter ((== id).getID) tl)
@@ -60,7 +39,6 @@ validateNumericalityOf str = foldr (&&) True (map isDigit str)
 
 tlgetTableID (t:ts) id = 
     if (getID t) == id then t else tlgetTableID ts id
-
 
 showReserv :: [Reservation] -> String
 showReserv [] = "";
@@ -84,5 +62,29 @@ loadDB :: FilePath -> IO TableList
 loadDB path = do
     h <- openFile path ReadMode
     cont <- hGetContents h
-    return $! (read cont);
+    return $! (read cont)
+
+
+getTimeDifference ct1 ct2 = diffClockTimes (toClockTime ct1) (toClockTime ct2)
+
+defaultPeriod = TimeDiff 0 0 0 2 0 0 0
+
+
+-- CHECK IF IT IS VALID!!!
+testTableReservationAbility [] cal diff = True
+testTableReservationAbility ((Reservation _ cal diff _):xs) ncal ndiff =
+    if ncal >= cal then
+            if normalizeTimeDiff (getTimeDifference ncal cal) >= diff then True && testTableReservationAbility xs ncal ndiff else False
+        else
+            if normalizeTimeDiff (getTimeDifference cal ncal) >= ndiff then True && testTableReservationAbility xs ncal ndiff else False
+
+findTablesWithSufficientSeats seats tl = filter (\t -> (getSeats t) >= seats) tl
+
+findFreeTablesByDateAndTime date time tl = filter (\t -> testTableReservationAbility (getReservations t) date time) tl
+
+tablesReadyToReserve date seats tl = findFreeTablesByDateAndTime date defaultPeriod (findTablesWithSufficientSeats seats tl)
+
+-- STUB
+addReservationToTable_ (Table id seats desc reservations) name day = Table id seats desc ((Reservation name day defaultPeriod ""):reservations)
+addReservationToTable tl id name day  = (addReservationToTable_ (tlgetTableID tl id) name day):(remById id tl)
 

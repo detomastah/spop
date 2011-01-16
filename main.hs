@@ -108,14 +108,14 @@ actTablesMod tl = do
     id <- (askForID tl False)
     seats <- askForNumericValue "Table number of seats: "
     desc <- askForStringValue "Description: "
-    return (addTable (table id seats desc) (remID id tl))
+    return (addTable (table id seats desc) (remById id tl))
 
 actTablesDel :: TableList -> IO TableList
 actTablesDel tl = do
     putStrLn "\nTable Delete"
     id <- askForNumericValue "TableID: "
     if validateExistenceOfTable tl id == False then do 
-            putStrLn "Table removed"; return (remID id tl)
+            putStrLn "Table removed"; return (remById id tl)
         else do
             putStrLn ("Error ID doesn't exist");
             return tl;
@@ -139,30 +139,29 @@ menuReserv tl = do
         "`"		->	do return tl;
         otherwise	->	do putStrLn "Invalid option";   menuReserv tl;
     return tl;
+    
+    -- Wpisanie pustego daje wyjatek PARSE!!!! SKORYGOWAC!!!!
 
 actReservAdd :: TableList -> IO TableList
 actReservAdd tl = do
     putStrLn "\nReservation Add"
+
+    day <- askForDayTimeValue;    
+    seats <- askForNumericValue "How many angry people: "
+    name <- askForStringValue "Angry client's surname: "
     
-{-    return (addTable (Table 5 3 "neww" [
-        (Reservation "Bla" (toUTCTime (toClockTime (CalendarTime 2011 (toEnum 0) 15 12 00 0 0 Monday 0 "" 0 False))) (TimeDiff 0 0 0 2 0 0 0) ""),
-        (Reservation "Bla2" (toUTCTime (toClockTime (CalendarTime 2011 (toEnum 0) 15 15 00 0 0 Monday 0 "" 0 False))) (TimeDiff 0 0 0 2 0 0 0) "")
-        ]) tl)
-    -}
-    
-    
---    seats <- askForNumericValue "How many people: "
-    
-    day <- askForDayTimeValue;
-    putStrLn (calendarTimeToString day);
-    
---    seats <- askForNumericValue "How many people: "
-    
---    putStrLn (showDB (searchFreeTables_MinSeats seats tl))
-    putStrLn (showDB (searchFreeTables_Date_Time day (TimeDiff 0 0 0 2 0 0 0) tl))
---    name <- askForStringValue "Name: "
-    
-    return tl;
+    let available_tables = tablesReadyToReserve day seats tl
+
+    new_tl <- if length available_tables > 0 then do
+                putStrLn "Available tables: "
+                putStrLn (showDB available_tables)
+                id <- askForID available_tables False
+                return (addReservationToTable tl id name day)
+            else do
+                    putStrLn "No available tables found"
+                    return tl
+
+    return new_tl;
 
 
 
