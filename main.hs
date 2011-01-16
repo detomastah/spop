@@ -68,7 +68,7 @@ askForNumericValue :: String -> IO Int
 askForNumericValue question = do
     putStr question; hFlush stdout 
     i <- getLine
-    if validateNumericalityOf i == False then do
+    if length i < 1 || validateNumericalityOf i == False then do
             putStrLn "Invalid value: non numeric"
             askForNumericValue question
         else return (read i)
@@ -153,7 +153,7 @@ actReservAdd tl = do
     period <- return (normalizeTimeDiff (minutesPeriod ((div (i+14) 15) * 15)))
     putStrLn (show period)
     seats <- askForNumericValue "How many angry people: "
-    name <- askForStringValue "Angry client's surname: "
+
     
     let available_tables = tablesReadyToReserve date period seats tl
     
@@ -161,6 +161,7 @@ actReservAdd tl = do
                 putStrLn "Available tables: "
                 putStrLn (showDB available_tables)
                 id <- askForID available_tables False
+                name <- askForStringValue "Angry client's surname: "
                 return (addReservation tl id name date period)
             else do
                     putStrLn "No available tables found"
@@ -174,28 +175,33 @@ actReservDelByName tl = do
     putStrLn "\nReservation Delete"
     
     name <- askForStringValue "Angry client's surname: "
-    putStrLn (showDB (filterTablesWithReservByName tl name))
---    date <- askForDayTimeValue;
     
-    putStrLn "\nMenu:"
-    putStrLn "\t1 - All"
-    putStrLn "\t2 - By Date"
-    putStrLn "\t3 - By Table ID & Date"
-    putStr "Command? "; hFlush stdout
-    q <- getLine
-    tl <- (case q of
-        "1"     ->  return (remReservationByName tl name)
-        "2"     ->  do date <- askForDayTimeValue;
-                        return (remReservationByNameAndDate tl name date)
-        "3"     ->  do id <- askForID tl False;
-                        date <- askForDayTimeValue;
-                        return (if id /= 0 then (remReservationByIDAndDate tl id date) else tl)
-        )
+    let available_tables = filterTablesWithReservByName tl name
+    new_tl <- if length available_tables > 0 then do
+            putStrLn (showDB available_tables)
+            
+            putStrLn "\nMenu:"
+            putStrLn "\t1 - All"
+            putStrLn "\t2 - By Date"
+            putStrLn "\t3 - By Table ID & Date"
+            putStr "Command? "; hFlush stdout
+            q <- getLine
+            tl <- case q of
+                "1"     ->  return (remReservationByName tl name)
+                "2"     ->  do date <- askForDayTimeValue;
+                                return (remReservationByNameAndDate tl name date)
+                "3"     ->  do id <- askForID available_tables False;
+                                date <- askForDayTimeValue;
+                                return (if id /= 0 then (remReservationByIDAndDate tl id date) else tl)
+            
+            putStrLn ("\nReservation status for " ++ name ++ ":")
+            putStrLn (showDB (filterTablesWithReservByName tl name))
+            return tl
+        else do
+                putStrLn "No reservations found"
+                return tl
     
-    putStrLn ("\nReservation status for " ++ name ++ ":")
-    putStrLn (showDB (filterTablesWithReservByName tl name))
-    
-    return tl
+    return new_tl
 
 
 
