@@ -161,7 +161,7 @@ actReservAdd tl = do
                 putStrLn "Available tables: "
                 putStrLn (showDB available_tables)
                 id <- askForID available_tables False
-                return (addReservationToTable tl id name date period)
+                return (addReservation tl id name date period)
             else do
                     putStrLn "No available tables found"
                     return tl
@@ -184,12 +184,12 @@ actReservDelByName tl = do
     putStr "Command? "; hFlush stdout
     q <- getLine
     tl <- (case q of
-        "1"     ->  return (remReservationFromTL_Name tl name)
+        "1"     ->  return (remReservationByName tl name)
         "2"     ->  do date <- askForDayTimeValue;
-                        return (remReservationFromTL_NameDate tl name date)
+                        return (remReservationByNameAndDate tl name date)
         "3"     ->  do id <- askForID tl False;
                         date <- askForDayTimeValue;
-                        return (if id /= 0 then (remReservationFromTL_IDDate tl id date) else tl)
+                        return (if id /= 0 then (remReservationByIDAndDate tl id date) else tl)
         )
     
     putStrLn ("\nReservation status for " ++ name ++ ":")

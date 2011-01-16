@@ -40,8 +40,8 @@ validateExistenceOfTable tl id = 0 == length (filter ((== id).getID) tl)
 
 validateNumericalityOf str = foldr (&&) True (map isDigit str) 
 
-tlgetTableID (t:ts) id = 
-    if (getID t) == id then t else tlgetTableID ts id
+findTableByID (t:ts) id = 
+    if (getID t) == id then t else findTableByID ts id
 
 showDate (CalendarTime ctYear ctMonth ctDay ctHour ctMin ctSec ctPicosec ctWDay ctYDay ctTZName ctTZ ctIsDST) =
     (show ctMonth) ++ " " ++ (show ctDay) ++ " " ++ (show ctHour) ++ ":" ++ (show ctMin)
@@ -95,18 +95,18 @@ findFreeTablesByDateAndTime date period tl = filter (\t -> testTableReservationA
 tablesReadyToReserve date period seats tl = findFreeTablesByDateAndTime date period (findTablesWithSufficientSeats seats tl)
 
 -- STUB
-addReservationToTable_ (Table id seats desc reservations) name date period = Table id seats desc new_reservations
+addReservationToTable (Table id seats desc reservations) name date period = Table id seats desc new_reservations
     where new_reservations = (Reservation name date period ""):reservations
-addReservationToTable tl id name date period = (addReservationToTable_ (tlgetTableID tl id) name date period):(remById id tl)
+addReservation tl id name date period = (addReservationToTable (findTableByID tl id) name date period):(remById id tl)
 
 
-remReservationFromTable_Name (Table id seats desc res) name = (Table id seats desc (filter (\x -> (getName x) /= name) res))
-remReservationFromTable_Date (Table id seats desc res) date = (Table id seats desc (filter (\x -> (getDate x) /= date) res))
-remReservationFromTable_NameDate (Table id seats desc res) name date = (Table id seats desc (filter (\x -> ((getName x /= name) || (getDate x /= date))) res))
+remReservationFromTableByName_ (Table id seats desc res) name = (Table id seats desc (filter (\x -> (getName x) /= name) res))
+remReservationFromTableByDate_ (Table id seats desc res) date = (Table id seats desc (filter (\x -> (getDate x) /= date) res))
+remReservationFromTableByNameAndDate_ (Table id seats desc res) name date = (Table id seats desc (filter (\x -> ((getName x /= name) || (getDate x /= date))) res))
 
-remReservationFromTL_Name tl name = map (\x -> remReservationFromTable_Name x name) tl
-remReservationFromTL_NameDate tl name date = map (\x -> remReservationFromTable_NameDate x name date) tl
-remReservationFromTL_IDDate tl id date = (remReservationFromTable_Date (tlgetTableID tl id) date):(remById id tl)
+remReservationByName tl name = map (\x -> remReservationFromTableByName_ x name) tl
+remReservationByNameAndDate tl name date = map (\x -> remReservationFromTableByNameAndDate_ x name date) tl
+remReservationByIDAndDate tl id date = (remReservationFromTableByDate_ (findTableByID tl id) date):(remById id tl)
 
 filterTablesWithReservByName [] name = []
 filterTablesWithReservByName ((Table id seats desc res):ts) name =
@@ -120,6 +120,6 @@ filterTablesWithReservByName ((Table id seats desc res):ts) name =
 tl <- loadDB "database"
 putStrLn (showDB tl)
 date <- askForDayTimeValue
-putStrLn (showDB (remReservationFromTL_NameDate tl "Bla2" date))
+putStrLn (showDB (remReservationByNameAndDate tl "Bla2" date))
 
    -}
