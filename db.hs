@@ -95,7 +95,8 @@ findFreeTablesByDateAndTime date period tl = filter (\t -> testTableReservationA
 tablesReadyToReserve date period seats tl = findFreeTablesByDateAndTime date period (findTablesWithSufficientSeats seats tl)
 
 -- STUB
-addReservationToTable_ (Table id seats desc reservations) name date period = Table id seats desc ((Reservation name date period ""):reservations)
+addReservationToTable_ (Table id seats desc reservations) name date period = Table id seats desc new_reservations
+    where new_reservations = (Reservation name date period ""):reservations
 addReservationToTable tl id name date period = (addReservationToTable_ (tlgetTableID tl id) name date period):(remById id tl)
 
 
@@ -106,7 +107,6 @@ remReservationFromTable_NameDate (Table id seats desc res) name date = (Table id
 remReservationFromTL_Name tl name = map (\x -> remReservationFromTable_Name x name) tl
 remReservationFromTL_NameDate tl name date = map (\x -> remReservationFromTable_NameDate x name date) tl
 remReservationFromTL_IDDate tl id date = (remReservationFromTable_Date (tlgetTableID tl id) date):(remById id tl)
-
 
 filterTablesWithReservByName [] name = []
 filterTablesWithReservByName ((Table id seats desc res):ts) name =
