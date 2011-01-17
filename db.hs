@@ -104,21 +104,19 @@ saveDB tl path = do
     hClose h
     return ()
 
-loadDB :: FilePath -> IO TableList
-loadDB path = do
+loadDB_ :: FilePath -> IO TableList
+loadDB_ path = do
     h <- openFile path ReadMode
     cont <- hGetContents h
     return $! (read cont)
 
-
+loadDB path = catch (loadDB_ path) (\e -> do return [])
 
 
 getTimeDifference ct1 ct2 = normalizeTimeDiff (diffClockTimes (toClockTime ct1) (toClockTime ct2))
 
 minutesPeriod i = (TimeDiff 0 0 0 0 i 0 0)
 
-
--- CHECK IF IT IS VALID!!!
 testTableReservationAbility [] date period = True
 testTableReservationAbility ((Reservation _ date period _):xs) ndate nperiod =
     if ndate >= date then
@@ -161,19 +159,9 @@ filterTablesWithReservByName ((Table id seats desc res):ts) name =
 existsReservationByDate [] date = False
 existsReservationByDate (r:rs) date = if (getDate r) == date then True else existsReservationByDate rs date
 
-
 getReservationMaxPeriodAtDate [] date = (TimeDiff 0 0 1 0 0 0 0)
 getReservationMaxPeriodAtDate ((Reservation _ date period _):xs) ndate =
     if ndate >= date then
             if getTimeDifference ndate date >= period then getReservationMaxPeriodAtDate xs ndate else (TimeDiff 0 0 0 0 0 0 0)
         else
             getTimeDifference date ndate
-
-{-
-
-tl <- loadDB "database"
-putStrLn (showDB tl)
-date <- askForDayTimeValue
-putStrLn (showDB (remReservationByNameAndDate tl "Bla2" date))
-
-   -}
