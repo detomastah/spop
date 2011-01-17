@@ -10,7 +10,7 @@ quicksort (x:xs)        =  quicksort [y | y <- xs, y<x ]
                         ++ [x]
                         ++ quicksort [y | y <- xs, y>=x]
 
-{- nazwisko, data, okres, uwagi -}
+-- nazwisko, data, okres, uwagi
 data Reservation = Reservation String CalendarTime TimeDiff String deriving(Show, Read)
 
 instance Eq Reservation where
@@ -28,7 +28,7 @@ instance Ord Reservation where
         date0 >= date1
 
 
-{- numer stolika, ilosc siedzen, opis, rezerwacje -}
+-- numer stolika, ilosc siedzen, opis, rezerwacje
 data Table = Table Int Int String [Reservation] deriving(Show, Read)
 
 instance Eq Table where
@@ -113,6 +113,7 @@ getTimeDifference ct1 ct2 = normalizeTimeDiff (diffClockTimes (toClockTime ct1) 
 
 minutesPeriod i = (TimeDiff 0 0 0 0 i 0 0)
 
+-- zwraca czy dana podana data i okres nie zachodzi na jakas inna rezerwacje w liscie
 testTableReservationAbility [] date period = True
 testTableReservationAbility ((Reservation _ date period _):xs) ndate nperiod =
     if ndate >= date then
@@ -120,29 +121,40 @@ testTableReservationAbility ((Reservation _ date period _):xs) ndate nperiod =
         else
             if getTimeDifference date ndate >= nperiod then True && testTableReservationAbility xs ndate nperiod else False
 
+--zwraca liste tabel o wystarczajacej liczbie siedzen
 findTablesWithSufficientSeats seats tl = filter (\t -> (getSeats t) >= seats) tl
 
+--zwraca liste tabel wolnych w podanym okresie
 findFreeTablesByDateAndTime date period tl = filter (\t -> testTableReservationAbility (getReservations t) date period) tl
 
+--zwraca liste tabel wolnych w podanym okresie, i o wystarczajacej liczbie siedzen 
 tablesReadyToReserve date period seats tl = findFreeTablesByDateAndTime date period (findTablesWithSufficientSeats seats tl)
 
--- STUB
+-- dodaje rezerwacje do stolika, oraz sortuje liste
 addReservationToTable (Table id seats desc reservations) name date period = Table id seats desc (quicksort new_reservations)
     where new_reservations = (Reservation name date period ""):reservations
+-- do listy z usunietym stolikiem o danym id dodaje ten sam stolik z dodana nowa rezerwacja
 addReservation tl id name date period = (addReservationToTable (findTableByID tl id) name date period):(remById id tl)
 
+-- funkcje usuwaja ze stolika kazda rezerwacje pasujaca do podanych pol
 remReservationFromTableByName (Table id seats desc res) name = (Table id seats desc (filter (\x -> (getName x) /= name) res))
 remReservationFromTableByDate (Table id seats desc res) date = (Table id seats desc (filter (\x -> (getDate x) /= date) res))
 remReservationFromTableByNameAndDate (Table id seats desc res) name date = (Table id seats desc (filter (\x -> ((getName x /= name) || (getDate x /= date))) res))
 
+-- funkcje usuwaja z listy stolikow kazda rezerwacje pasujaca do podanych pol
 remReservationByName tl name = map (\x -> remReservationFromTableByName x name) tl
 remReservationByNameAndDate tl name date = map (\x -> remReservationFromTableByNameAndDate x name date) tl
+
+-- funkcja usuwa z listy stolikow stolik i nastepnie dodaje go spowrotem bez rezerwacji o podanej dacie
 remReservationByIDAndDate tl id date = (remReservationFromTableByDate (findTableByID tl id) date):(remById id tl)
 
+-- funkcje usuwaja rezerwacje starsze niz podana data
 remReservationFromTableBeforeDate (Table id seats desc res) date = (Table id seats desc (filter (\x -> (getDate x) >= date) res))
 remReservationBeforeDate tl date = map (\x -> remReservationFromTableBeforeDate x date) tl
 
 
+-- zwraca liste tabel posiadajacych rezerwacje na dane nazwisko (rezerwacje sa rowniez uciete tylko do tych na podane nazwisko)
+-- onlyname usuwa rezerwacje o innym nazwisku, jezeli ta lista jest pusta to zostaje zwracana (z wywolaniem rekurencyjnym) lista bez aktualnego "heada"
 filterTablesWithReservByName [] name = []
 filterTablesWithReservByName ((Table id seats desc res):ts) name =
     let onlyname = (filter (\x -> (getName x) == name) res)
@@ -151,10 +163,13 @@ filterTablesWithReservByName ((Table id seats desc res):ts) name =
         else (Table id seats desc onlyname):(filterTablesWithReservByName ts name)
 
 
+-- sprawdza czy istnieje rezerwacja na podana date, 
 existsReservationByDate [] date = False
 existsReservationByDate (r:rs) date = if (getDate r) == date then True else existsReservationByDate rs date
 
-getReservationMaxPeriodAtDate [] date = (TimeDiff 0 0 1 0 0 0 0)
+-- zwraca maxymalny dostepny okres na rezerwacje od podanej daty
+-- wymaga posortowanej listy rezerwacji
+getReservationMaxPeriodAtDate [] date = (TimeDiff 1 0 0 0 0 0 0)
 getReservationMaxPeriodAtDate ((Reservation _ date period _):xs) ndate =
     if ndate >= date then
             if getTimeDifference ndate date >= period then getReservationMaxPeriodAtDate xs ndate else (TimeDiff 0 0 0 0 0 0 0)

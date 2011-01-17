@@ -273,7 +273,7 @@ actSearchForFreeTablesByDate tl = do
     
     let showSlots (id, seats, desc, period) = "ID: " ++ show id
             ++ "\tSeats: " ++ show seats
-            ++ "\tFree Time: " ++ (if period == (TimeDiff 0 0 1 0 0 0 0) then "*:*" else showPeriod period)
+            ++ "\tFree Time: " ++ (if period == (TimeDiff 1 0 0 0 0 0 0) then "*:*" else showPeriod period)
             ++ "\tDesc: " ++ desc
             ++ "\n"
     
