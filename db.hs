@@ -52,7 +52,7 @@ calGetDay (CalendarTime year month day hour min _ _ _ _ _ _ _) = day
 
 addTable :: Table -> TableList -> TableList
 addTable t [] = [t]
-addTable t tl = quicksort (t:tl)
+addTable t tl = t:tl
 
 remById :: Int -> TableList -> TableList
 remById ii [] = []
@@ -72,8 +72,6 @@ validateNumericalityOf str = foldr (&&) True (map isDigit str)
 
 findTableByID (t:ts) id = 
     if (getID t) == id then t else findTableByID ts id
-
-
 
 showDate (CalendarTime ctYear ctMonth ctDay ctHour ctMin ctSec ctPicosec ctWDay ctYDay ctTZName ctTZ ctIsDST) =
     (show ctMonth) ++ " " ++ (show ctDay) ++ " " ++ (show ctHour) ++ ":" ++ (show ctMin)
@@ -96,7 +94,6 @@ showDB (x:xs) = (showTable x) ++ (showDB xs)
 showJustTables [] = "Empty"
 showJustTables tl = concat (map (showJustTable) tl)
 
-
 saveDB :: TableList -> FilePath -> IO ()
 saveDB tl path = do
     h <- openFile path WriteMode
@@ -111,7 +108,6 @@ loadDB_ path = do
     return $! (read cont)
 
 loadDB path = catch (loadDB_ path) (\e -> do return [])
-
 
 getTimeDifference ct1 ct2 = normalizeTimeDiff (diffClockTimes (toClockTime ct1) (toClockTime ct2))
 
@@ -134,7 +130,6 @@ tablesReadyToReserve date period seats tl = findFreeTablesByDateAndTime date per
 addReservationToTable (Table id seats desc reservations) name date period = Table id seats desc (quicksort new_reservations)
     where new_reservations = (Reservation name date period ""):reservations
 addReservation tl id name date period = (addReservationToTable (findTableByID tl id) name date period):(remById id tl)
-
 
 remReservationFromTableByName (Table id seats desc res) name = (Table id seats desc (filter (\x -> (getName x) /= name) res))
 remReservationFromTableByDate (Table id seats desc res) date = (Table id seats desc (filter (\x -> (getDate x) /= date) res))

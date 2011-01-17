@@ -158,8 +158,6 @@ menuReserv tl = do
         "`"         ->  do return tl;
         otherwise   ->  do putStrLn "Invalid option";   menuReserv tl;
     return tl;
-    
-    -- Wpisanie pustego daje wyjatek PARSE!!!! SKORYGOWAC!!!!
 
 actReservAdd :: TableList -> IO TableList
 actReservAdd tl = do
@@ -199,15 +197,13 @@ actReservModByName tl = do
             if id == 0 then return tl
                 else do
                 date <- askForDayTimeValue
-                putStrLn (show date)
-                putStrLn (show (findTableByID tl id))
-                putStrLn (show (getReservations (findTableByID tl id)))
-                putStrLn (show (existsReservationByDate (getReservations (findTableByID tl id)) date))
+
                 if existsReservationByDate (getReservations (findTableByID tl id)) date == False then return tl
                     else do
                         new_tl <- return (remReservationByIDAndDate tl id date)
+                        putStrLn "Enter new reservation details: "
                         date <- askForDayTimeValue
-                    --    putStrLn (show date)
+
                         period <- askForTimePeriod
                         seats <- askForNumericValue "How many angry people: "
 
